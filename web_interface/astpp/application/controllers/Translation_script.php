@@ -54,31 +54,32 @@ class Translation_script extends CI_Controller {
                                 foreach ($result as $data_value) {
                                     unset($data_value['id']);
 					$txt = "";
-					    $msgid = $data_value['module_name'];
+//					    $msgid = $data_value['module_name'];
+					    $msgid = $data_value['en_En'];
 					    $msgstr = $data_value[$locale_value['locale']];
                                             $txt .= 'msgid'.' "'.$msgid.'"'. "\n";
                                             $txt .= 'msgstr'.' "'.$msgstr.'"'. "\n\n";
                                             fwrite($myfile, $txt);
                                 }
 				fclose($myfile);
-	                        $command = 'cd '.FCPATH.'language/'.$locale_value['locale'].'/LC_MESSAGES/ && msgfmt '.'messages'. '.po -o ' .'messages'.'.mo';
+	                        $command = 'cd '.FCPATH.'language/'.$locale_value['locale'].'/LC_MESSAGES/ && msgfmt messages.po -o messages.mo';
                             	exec($command);
 	                        
 			    }else{
-		                $this->session->set_flashdata ( 'astpp_errormsg', 'unable to write files.' );
+		                $this->session->set_flashdata ( 'astpp_errormsg', gettext('unable to write files.') );
 			    }
                         }
 
-                $this->session->set_flashdata ( 'astpp_errormsg', 'Language Translations sucessfull!' );
+                $this->session->set_flashdata ( 'astpp_errormsg', gettext('Language Translations sucessfull!') );
                 redirect ( base_url () . 'systems/languages_list/' );
                 die();
             } else {
-                $this->session->set_flashdata ( 'astpp_notification', 'No data found!' );
+                $this->session->set_flashdata ( 'astpp_notification', gettext('No data found!') );
                 redirect ( base_url () . 'systems/languages_list/' );
                 die();
             }
         } else {
-            $this->session->set_flashdata ( 'astpp_notification', 'No data found!' );
+            $this->session->set_flashdata ( 'astpp_notification', gettext('No data found!') );
             redirect ( base_url () . 'systems/languages_list/' );
             die();
         }

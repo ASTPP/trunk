@@ -1133,6 +1133,12 @@ class Accounts extends MX_Controller
         $data['page_title'] = gettext("CDRs");
         $accountinfo = $this->session->userdata('accountinfo');
         $reseller_id = ($accountinfo['type'] == 1 || $accountinfo['type'] == 5) ? $accountinfo['id'] : 0;
+
+        $data['search_flag'] = true;
+        $this->session->set_userdata('advance_search', 0);
+        $this->session->set_userdata('advance_search_date', 1);
+        $this->session->set_userdata('customer_cdr_id', $edit_id);
+
         if ($accountinfo['type'] == - 1) {
             $where = array(
                 'id' => $edit_id
@@ -1148,7 +1154,9 @@ class Accounts extends MX_Controller
             $account_data = (array) $account_res->first_row();
             $accounttype = strtolower($this->common->get_entity_type('', '', $account_data['type']));
             $this->load->module('reports/reports');
-            $data['grid_fields'] = $this->reports->reports_form->build_report_list_for_user($accounttype);
+//            $data['grid_fields'] = $this->reports->reports_form->build_report_list_for_user($accounttype);
+            $data['grid_fields'] = $this->reports_form->build_report_list_for_customer();
+            $data['form_search'] = $this->form->build_serach_form($this->reports_form->get_customer_lite_cdr_form());
             $data['edit_id'] = $edit_id;
             $data['accounttype'] = $accounttype;
             $this->load->view('view_customer_cdrs_list', $data);
@@ -1497,7 +1505,7 @@ class Accounts extends MX_Controller
             $customer_info = (array) $customer_info->first_row();
             $currency = $this->accounts_model->get_currency_by_id($customer_info['currency_id']);
             $data['username'] = $this->session->userdata('user_name');
-            $data['page_title'] = gettext('​Refill Process');
+            $data['page_title'] = gettext('Refill Process');
             $data['form'] = $this->form->build_form($this->accounts_form->get_customer_payment_fields($currency['currency'], $customer_info['number'], $currency['currency'], $id), '');
             $this->load->view('view_accounts_process_payment', $data);
         } else {
@@ -2826,7 +2834,11 @@ class Accounts extends MX_Controller
             $product_info = $this->db_model->getSelect("*", "products", array(
                 "id" => $product_id
             ));
+
             $data['product_info'] = (array) $product_info->first_row();
+            $data['product_info']['price'] = round(floatval($data['product_info']['price']), 2);
+            $data['product_info']['setup_fee'] = round(floatval($data['product_info']['setup_fee']), 2);
+
             $this->load->view("view_customer_orders_assign", $data);
         }
 

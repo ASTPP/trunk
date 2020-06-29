@@ -397,11 +397,11 @@ class user_model extends CI_Model
             }
         }
         $this->db->where($where);
-        $this->db->order_by("callstart desc");
         if ($flag) {
             if (! $export)
+                $this->db->order_by("callstart desc");
                 $this->db->limit($limit, $start);
-            $this->db->select('callstart,is_recording,sip_user,callerid,call_direction,callednum,pattern,notes,billseconds,disposition,debit,cost,accountid,pricelist_id,calltype,is_recording,trunk_id,uniqueid,uniqueid as uid');
+                $this->db->select('callstart,sip_user,callerid,call_direction,callednum,pattern,notes,billseconds,disposition,debit,cost,accountid,pricelist_id,calltype,is_recording,trunk_id,uniqueid,uniqueid as uid');
         } else {
             $this->db->select('count(*) as count,sum(billseconds) as billseconds,sum(debit) as total_debit,sum(cost) as total_cost,SUM(CASE WHEN calltype = "FREE" THEN debit ELSE 0 END) AS free_debit,group_concat(distinct(pricelist_id)) as pricelist_ids,group_concat(distinct(trunk_id)) as trunk_ids');
         }
@@ -610,11 +610,30 @@ class user_model extends CI_Model
         $this->db_model->build_search('orders_list_search', 'orders.');
         $account_data = $this->session->userdata("accountinfo");
         $where_arr = array(
-            "orders.accountid" => $account_data['id']
+            'orders.accountid' => $account_data['id']
         );
         $this->db->order_by("orders.order_date", "desc");
         if ($flag) {
-            $query = $this->db_model->getJionQuery('orders', 'orders.id,orders.order_date,orders.order_id as id1,orders.payment_gateway,orders.payment_status,order_items.order_id as orderid,order_items.price,order_items.setup_fee,order_items.product_id', $where_arr, 'order_items', 'orders.id=order_items.order_id', 'inner', $limit, $start, '', '');
+            $query = $this->db_model->getAllJionQuery(
+                'orders',
+                'order_items.free_minutes, (order_items.free_minutes-IFNULL(FLOOR(counters.used_seconds/60), order_items.free_minutes - order_items.free_minutes )) as used_seconds, orders.id, orders.order_date, orders.order_id as id1,orders.payment_gateway,orders.payment_status,order_items.order_id as orderid,order_items.price,order_items.setup_fee,order_items.product_id',
+                $where_arr,
+                array(
+                    'order_items',
+                    'counters',
+                ),
+                array(
+                    'orders.id=order_items.order_id',
+                    'order_items.product_id = counters.product_id and counters.accountid = orders.accountid and counters.package_id = order_items.id'
+                ),
+                array(
+                    'inner',
+                    'left',
+                ),
+                $limit,
+                $start,
+                '',
+                '');
         } else {
             $query = $this->db_model->getJionQueryCount('orders', 'orders.id,orders.order_date,orders.order_id as id1,orders.payment_gateway,order_items.order_id as orderid,order_items.price,order_items.setup_fee,order_items.product_id', $where_arr, 'order_items', 'orders.id=order_items.order_id', 'inner', '', '', '', '');
         }

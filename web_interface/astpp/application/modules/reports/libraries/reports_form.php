@@ -252,11 +252,7 @@ class Reports_form extends common
                 ),
                 array(
                     gettext('Account'),
-                    array(
-                        'name' => 'accountid',
-                        'id' => 'accountid_search_drp',
-                        'class' => 'accountid_search_drp'
-                    ),
+                    'accountid',
                     'SELECT',
                     '',
                     '',
@@ -268,8 +264,8 @@ class Reports_form extends common
                     'build_dropdown_deleted',
                     'where_arr',
                     array(
-                        "reseller_id" => "0",
-                        "type" => "GLOBAL"
+                        'reseller_id' => 0,
+                        'type' => '0'
                     )
                 ),
                 array(
@@ -577,8 +573,8 @@ class Reports_form extends common
                     'build_dropdown_deleted',
                     'where_arr',
                     array(
-                        "reseller_id" => "0",
-                        "type" => "GLOBAL"
+                        'reseller_id' => 0,
+                        'type' => 0
                     )
                 ),
 
@@ -664,6 +660,121 @@ class Reports_form extends common
             'type' => 'button',
             'class' => 'btn btn-success float-right'
         );
+        $form['button_reset'] = array(
+            'name' => 'action',
+            'id' => "id_reset",
+            'content' => 'Clear',
+            'value' => gettext('Cancel'),
+            'type' => 'reset',
+            'class' => 'btn btn-secondary float-right ml-2'
+        );
+
+        return $form;
+    }
+
+    function get_customer_lite_cdr_form()
+    {
+        $logintype = $this->CI->session->userdata('userlevel_logintype');
+        if ($logintype != 1) {
+            if ($this->CI->session->userdata('logintype') == 1 || $this->CI->session->userdata('logintype') == 5) {
+                $accountinfo = $this->CI->session->userdata['accountinfo'];
+                $reseller_id = $accountinfo["id"];
+            } else {
+                $reseller_id = "0";
+            }
+            $form['forms'] = array(
+                "",
+                array(
+                    'id' => "cdr_customer_search"
+                )
+            );
+            $form[gettext('Search')] = array(
+                array(
+                    gettext('From Date'),
+                    'INPUT',
+                    array(
+                        'name' => 'callstart[]',
+                        'id' => 'customer_cdr_from_date',
+                        'size' => '20',
+                        'class' => "text field "
+                    ),
+                    '',
+                    'tOOL TIP',
+                    '',
+                    'start_date[start_date-date]'
+                ),
+                array(
+                    gettext('To Date'),
+                    'INPUT',
+                    array(
+                        'name' => 'callstart[]',
+                        'id' => 'customer_cdr_to_date',
+                        'size' => '20',
+                        'class' => "text field "
+                    ),
+                    '',
+                    'tOOL TIP',
+                    '',
+                    'end_date[end_date-date]'
+                ),
+                array(
+                    gettext('Called Number'),
+                    'INPUT',
+                    array(
+                        'name' => 'callednum[callednum]',
+                        'value' => '',
+                        'size' => '20',
+                        'class' => "text field "
+                    ),
+                    '',
+                    'Tool tips info',
+                    '1',
+                    'callednum[callednum-string]',
+                    '',
+                    '',
+                    '',
+                    'search_string_type',
+                    ''
+                ),
+                array(
+                    '',
+                    'HIDDEN',
+                    'cdrs_year',
+                    '0',
+                    '',
+                    '',
+                    ''
+                ),
+                array(
+                    '',
+                    'HIDDEN',
+                    'ajax_search',
+                    '1',
+                    '',
+                    '',
+                    ''
+                ),
+                array(
+                    '',
+                    'HIDDEN',
+                    'advance_search',
+                    '1',
+                    '',
+                    '',
+                    ''
+                )
+            );
+        }
+
+        $form['button_search'] = array(
+            'name' => '',
+            'id' => "cusotmer_cdr_search_btn",
+            'content' => gettext('Search'),
+            'value' => 'save',
+            'type' => 'button',
+            'class' => 'btn btn-success float-right'
+        );
+
         $form['button_reset'] = array(
             'name' => 'action',
             'id' => "id_reset",
@@ -1401,7 +1512,7 @@ class Reports_form extends common
                 array(
                     gettext("Destination"),
                     "90",
-                    "notes",
+                    "did",
                     "",
                     "",
                     "",
@@ -1571,7 +1682,7 @@ class Reports_form extends common
                 array(
                     gettext("Destination"),
                     "80",
-                    "notes",
+                    "did",
                     "",
                     "",
                     "",

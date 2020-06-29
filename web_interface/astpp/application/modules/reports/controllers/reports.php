@@ -46,6 +46,7 @@ class Reports extends MX_Controller
         $data['search_flag'] = true;
         $this->session->set_userdata('advance_search', 0);
         $this->session->set_userdata('advance_search_date', 1);
+        $this->session->set_userdata('customer_cdr_id', 0);
         $data['grid_fields'] = $this->reports_form->build_report_list_for_customer();
         $data["grid_buttons"] = $this->reports_form->build_grid_customer();
         $data['form_search'] = $this->form->build_serach_form($this->reports_form->get_customer_cdr_form());
@@ -98,28 +99,38 @@ class Reports extends MX_Controller
             foreach ($query as $value) {
                 $duration = ($show_seconds == 'minutes') ? ($value['billseconds'] > 0) ? sprintf('%02d', $value['billseconds'] / 60) . ":" . sprintf('%02d', $value['billseconds'] % 60) : "00:00" : $value['billseconds'];
                 $account = isset($account_arr[$value['accountid']]) ? $account_arr[$value['accountid']] : 'Anonymous';
+//                $is_recording = isset($account_is_recording[$value['accountid']]) ? $account_is_recording[$value['accountid']] : '1';
+                $is_recording = 1;
+                if (
+                    isset($account_is_recording[$value['accountid']])
+                 && isset($value['is_recording'])
+                 && intval($value['billseconds'])>0
+                 && intval($account_is_recording[$value['accountid']]) == 0
+                 && intval($value['is_recording']) == 0
+                ){
+                    $is_recording = 0;
+                }
+
                 $is_recording = isset($account_is_recording[$value['accountid']]) ? $account_is_recording[$value['accountid']] : '1';
                 $uid = $value['uniqueid'];
                 if (($value['calltype'] == 'LOCAL' || $value['calltype'] == 'STANDARD') && $value['call_direction'] == 'inbound') {
                     $uid = rtrim($uid, $value['calltype'] . '_' . $value['accountid']);
                 }
-                $file_name = $this->config->item('recordings_path') . $uid . ".wav";
-                if (file_exists($file_name) && $value['calltype'] != 'FAX') {
+                $file_name = $this->config->item('recordings_path') . $uid . ".mp3";
+                if ($is_recording == 0 && $value['calltype'] != 'FAX') {
                     $billseconds = $value['billseconds'];
-                    $url = base_url() . "reports/customerReport_recording_download/" . $uid . ".wav";
+                    $url = base_url() . "reports/customerReport_recording_download/" . $uid . ".mp3";
                     $play_img_url = base_url() . "assets/images/play_file.png";
                     $pause_img_url = base_url() . "assets/images/pause.png";
-                    $action = '<audio id="myAudio_' . $uid . '">
-					<source src="' . $url . '" type="audio/mpeg">
-					Your browser does not support the audio element.
-					</audio>';
-                    $action .= "<button onclick='playAudio(\"$uid\",\"$billseconds\")' type='button' class='btnplay'  id='play_" . $uid . "'  style='display:block;margin:0px 0 0 25px;border:0px !important; float:left; padding:0px'><img src=" . $play_img_url . " height='25px' width='25px' style='cursor: pointer;'/></button>";
 
+                    $action  = '<audio id="myAudio_' . $uid . '" preload="none"><source src="' . $url . '" type="audio/mpeg">Your browser does not support the audio element.</audio>';
+                    $action .= "<button onclick='playAudio(\"$uid\",\"$billseconds\")' type='button' class='btnplay'  id='play_" . $uid . "'  style='display:block;margin:0px 0 0 25px;border:0px !important; float:left; padding:0px'><img src=" . $play_img_url . " height='25px' width='25px' style='cursor: pointer;'/></button>";
                     $action .= "<button onclick='pauseAudio(\"$uid\")' type='button'  class='btnplay' id='pause_" . $uid . "' style='display: none;margin:0px 0 0 25px;border:0px !important; float:left;padding:0px'><img src=" . $pause_img_url . " height='25px' width='25px' style='cursor: pointer;'/></button>";
-                    $recording = ($is_recording == 0) ? '<a title="Recording file" href="' . $url . '"><img src="' . base_url() . 'assets/images/download.png" height="20px" width="20px"/></a>' : '<img src="' . base_url() . 'assets/images/false.png" height="20px" alt="file not found" width="20px"/>';
+
+                    $recording = '<a title="'.gettext('Recording file').'" href="' . $url . '"><img src="' . base_url() . 'assets/images/download.png" height="20px" width="20px"/></a>';
                 } else {
-                    $recording = '<img src="' . base_url() . 'assets/images/false.png" height="20px" title="Record file is not available" width="20px"/>';
-                    $action = '<img src="' . base_url() . 'assets/images/false.png" height="20px" title="Play file is not available" width="20px"/>';
+                    $recording = '<img src="' . base_url() . 'assets/images/false.png" height="20px" title="'.gettext('Record file is not available').'" width="20px"/>';
+                    $action = '<img src="' . base_url() . 'assets/images/false.png" height="20px" title="'.$file_name.'" width="20px"/>';
                 }
                 if ($accountinfo['type'] == 1) {
                     $json_data['rows'][] = array(
@@ -129,14 +140,14 @@ class Reports extends MX_Controller
                             $value['callednum'],
                             $value['sip_user'],
                             filter_var($value['pattern'], FILTER_SANITIZE_NUMBER_INT),
-                            $value['notes'],
+                            $value['did'],
                             $duration,
                             $this->common->calculate_currency_manually($currency_info, $value['debit'], false),
                             $this->common->calculate_currency_manually($currency_info, $value['cost'], false),
                             $value['disposition'],
                             $account,
                             isset($pricelist_arr[$value['pricelist_id']]) ? $pricelist_arr[$value['pricelist_id']] : '',
-                            $value['call_direction'],
+                            gettext(ucfirst(strtolower($value['call_direction']))),
                             $recording . "  " . $action
                         )
                     );
@@ -148,7 +159,7 @@ class Reports extends MX_Controller
                             $value['callednum'],
                             $value['sip_user'],
                             filter_var($value['pattern'], FILTER_SANITIZE_NUMBER_INT),
-                            $value['notes'],
+                            $value['did'],
                             $duration,
                             $this->common->calculate_currency_manually($currency_info, $value['debit'], false),
                             $this->common->calculate_currency_manually($currency_info, $value['cost'], false),
@@ -157,7 +168,7 @@ class Reports extends MX_Controller
                             isset($trunk_arr[$value['trunk_id']]) ? $trunk_arr[$value['trunk_id']] : '',
                             isset($pricelist_arr[$value['pricelist_id']]) ? $pricelist_arr[$value['pricelist_id']] : '',
                             $value['calltype'],
-                            $value['call_direction'],
+                            gettext(ucfirst(strtolower($value['call_direction']))),
                             $recording . "  " . $action
                         )
                     );
@@ -192,8 +203,19 @@ class Reports extends MX_Controller
     function customerReport_recording_download($file_name)
     {
         $file_name = $this->config->item('recordings_path') . $file_name;
+
+        if ( !file_exists($file_name) ){
+            $uniqueid = pathinfo($file_name, PATHINFO_FILENAME);
+
+            $fs_host = "SELECT f.freeswitch_webapi FROM cdrs c, freeswich_servers f WHERE c.uniqueid='$uniqueid' AND c.fs_node=f.id";
+            $fs_host = (array) $this->db->query($fs_host)->first_row();
+
+            file_put_contents($file_name, fopen($fs_host['freeswitch_webapi'].'/index.php?section=record&uid='.$uniqueid, 'r'));
+        }
+
         header('Content-Description: File Transfer');
-        header('Content-Type: application/octet-stream');
+//        header('Content-Type: application/octet-stream');
+        header('Content-Type: audio/mpeg');
         header('Content-Disposition: attachment; filename=' . basename($file_name));
         header('Content-Transfer-Encoding: binary');
         header('Expires: 0');
@@ -317,7 +339,7 @@ class Reports extends MX_Controller
                         isset($trunk_arr[$value['trunk_id']]) ? $trunk_arr[$value['trunk_id']] : '',
                         isset($pricelist_arr[$value['pricelist_id']]) ? $pricelist_arr[$value['pricelist_id']] : '',
                         $value['calltype'],
-                        $value['call_direction'],
+                         gettext(ucfirst(strtolower($value['call_direction']))),
                         $value['sip_user']
                     );
                 }
@@ -371,7 +393,7 @@ class Reports extends MX_Controller
                         $value['disposition'],
                         $account,
                         isset($pricelist_arr[$value['pricelist_id']]) ? $pricelist_arr[$value['pricelist_id']] : '',
-                        $value['call_direction'],
+                         gettext(ucfirst(strtolower($value['call_direction']))),
                         $value['sip_user']
                     );
                 }
@@ -557,7 +579,7 @@ class Reports extends MX_Controller
                     $this->common->build_concat_string("first_name,last_name,number", "accounts", $value['accountid']),
                     isset($pricelist_arr[$value['pricelist_id']]) ? $pricelist_arr[$value['pricelist_id']] : '',
                     $value['calltype'],
-                    $value['call_direction']
+                     gettext(ucfirst(strtolower($value['call_direction'])))
                 );
             }
             $duration = ($show_seconds == 'minutes') ? ($count_all['billseconds'] > 0) ? floor($count_all['billseconds'] / 60) . ":" . sprintf('%02d', $count_all['billseconds'] % 60) : "00:00" : $count_all['billseconds'];
@@ -714,7 +736,7 @@ class Reports extends MX_Controller
                     $this->common->calculate_currency_manually($currency_info, $value['cost'], false, false),
                     $value['disposition'],
                     $account,
-                    $value['call_direction']
+                    gettext(ucfirst(strtolower($value['call_direction'])))
                 );
             }
             $duration = ($show_seconds == 'minutes') ? ($count_all['billseconds'] > 0) ? floor($count_all['billseconds'] / 60) . ":" . sprintf("%02d", $count_all['billseconds'] % 60) : "00:00" : $count_all['billseconds'];

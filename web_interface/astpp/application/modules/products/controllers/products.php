@@ -32,6 +32,7 @@ class Products extends MX_Controller {
 		$this->load->library ( 'astpp/order' );
 		$this->load->library ( 'did_lib' );
 		$this->load->model ( 'Astpp_common' );
+        $this->load->model ('analytics/analytics_model');
 		if ($this->session->userdata ( 'user_login' ) == FALSE)
 			redirect ( base_url () . '/astpp/login' );
 		$accountinfo=$this->session->userdata('accountinfo');
@@ -116,15 +117,17 @@ class Products extends MX_Controller {
 		$accountinfo = $this->session->userdata ( 'accountinfo' );
 		if(isset($_POST['product_category']) && $_POST['product_category'] != ''){
 			$data['product_name'] = isset($_POST['product_name'])?$_POST['product_name']:'';
-			$category =$data['product_category'][$_POST['product_category']];
+            $category = $this->db_model->getCurrent('category', 'code', array("id"=>intval($_POST['product_category'])));
 			$data['add_array'] = $_POST;
+            if( $category == 'ANALYTICS' ){
+                $data['resources'] = unserialize($this->analytics_model->getResources());
+            }
 			$this->load->view ( 'view_product_add_'.strtolower($category), $data);
 		}else{
 			if ($this->session->userdata ( 'logintype' ) == 1 || $this->session->userdata ( 'logintype' ) == 5){
 				$this->load->view ( 'view_product_add_subscription', $data);
 			}else{
 				$this->load->view ( 'view_product_add_package', $data);
-				
 			}
 		}
 	
@@ -156,7 +159,13 @@ class Products extends MX_Controller {
 			$data['product_info']=$product_info;
 			$data['edit_id']=$edit_id;
 			$data['country_id']=$product_info['country_id'];
-			$category = $this->common->get_field_name("name","category",array("id"=>$product_info['product_category']));
+			$data['applicable_calltype']=$product_info['applicable_calltype'];
+			$category = $this->common->get_field_name("code","category",array("id"=>$product_info['product_category']));
+
+            if( $category == 'ANALYTICS' ){
+                $data['product_info']['resources'] = unserialize($this->analytics_model->getResources());
+                $data['product_info']['attr'] = explode(',', $data['product_info']['attr']);
+            }
 
 			if($accountinfo ['type'] == 1){
 			 	if($accountinfo ['reseller_id'] > 0 ){
@@ -219,7 +228,7 @@ class Products extends MX_Controller {
 		$reseller_id = $accountinfo ['type'] == 1 ? $accountinfo ['id'] : 0;
 		$data['currency'] = $this->common->get_field_name("currency","currency",array("id"=>$accountinfo['currency_id']));
 		if(isset($add_array['product_name'])){
-			$this->form_validation->set_rules('product_name', 'Name', 'required');
+			$this->form_validation->set_rules('product_name', gettext('Name'), 'required');
 		}
 
 		if(!isset($add_array['id'])){
@@ -280,7 +289,7 @@ class Products extends MX_Controller {
 			$this->form_validation->set_rules('price', 'Price', 'numeric|required|greater_than[-1]|min_length[1]|max_length[15]|xss_clean');
 		}
 		if(isset($add_array['free_minutes'])){
-			$this->form_validation->set_rules('free_minutes', 'Free Minutes', 'numeric|required|is_natural|xss_clean');
+			$this->form_validation->set_rules('free_minutes', gettext('Free Minutes'), 'numeric|required|is_natural|xss_clean');
 		}
 		$this->form_validation->set_message('max_length', '%s field can not excced  numbers in length %s');
 		if(isset($add_array['id']) && $add_array['id'] != ''){ 
@@ -289,8 +298,7 @@ class Products extends MX_Controller {
 			$product_info = $this->db_model->getSelect ( "*", "products", array ('id' => $add_array['id']));
 			$product_info = ( array ) $product_info->first_row ();
 			$did_acc_id = $this->common->get_field_name("accountid","dids",array("product_id"=>$add_array['id']));
-			$category = $this->common->get_field_name("name","category",array("id"=>$product_info['product_category']));
-
+            $category = $this->db_model->getCurrent('category', 'name', array("id"=>$product_info['product_category']));
 			  if ($this->form_validation->run() == FALSE){ 	
 				$data ['page_title'] = gettext ( 'Edit Product' );
 				$data['product_info'] = $add_array ;
@@ -337,18 +345,26 @@ class Products extends MX_Controller {
 		  }
 		}
 		}else{
-			$category =$data['product_category'][$add_array['product_category']];
-		 	$data['add_array'] = $add_array['product_category'];
+   			$category =$this->db_model->getCurrent('category', 'code', array("id"=>$add_array['product_category']));
+    	 	$data['add_array'] = $add_array['product_category'];
 			$where_arr['where'] = $this->db->where(array("reseller_id"=>$reseller_id));
 			$data['product_rate_group'] = $this->db_model->build_dropdown("id,name", "pricelists", "", $where_arr);
 		      if ($this->form_validation->run() == FALSE){  
 				$data['add_array'] = $add_array;
-				
 				$data ['page_title'] = gettext ( 'Create Product' );
 				$data ['validation_errors'] = validation_errors ();
-//echo "<pre>"; print_r($data); exit;
+
+                if( $category == 'ANALYTICS' ){
+                    $data['resources'] = unserialize($this->analytics_model->getResources());
+                    if (!isset($add_array['resources'])){
+                        $jo = json_decode($data['validation_errors']);
+                        $jo->resources_error = "Select one or more from Reports";
+                        $data['validation_errors'] = json_encode($jo);
+                    }
+                }
+
 				$this->load->view ( 'view_product_add_'.strtolower($category), $data);	
-	       	     }else{  
+      	     }else{  
 			if(isset($add_array) && !empty($add_array)){
 				$account_data = $this->session->userdata ( "accountinfo" );
 				if ($this->session->userdata ( 'logintype' ) == 1 || $this->session->userdata ( 'logintype' ) == 5) {
@@ -459,6 +475,42 @@ class Products extends MX_Controller {
 	     }
 	
          }
+
+    function vpbx_product($add_array){
+        $SearchArr = '';
+        if(!empty($this->session->userdata('product_package_pattern_search'))){
+            $SearchArr = $this->session->userdata('product_package_pattern_search');
+        }
+        if(isset($add_array['id']) && $add_array['id']!= ''){
+            $this->product_model->edit_product($add_array,$add_array['id'],$SearchArr);
+        }else{
+            $last_id =$this->product_model->add_product($add_array,$SearchArr);
+
+            if($add_array['apply_on_existing_account'] == 0){
+                $this->assign_product_to_exiting_account($add_array,$last_id);
+            }
+            $this->session->set_flashdata ( 'astpp_errormsg', gettext('Package created successfully!'));
+            redirect ( base_url () . 'products/products_edit/'.$last_id.' ' );
+        }
+    }
+
+	function analytics_product($add_array){
+		$SearchArr = '';
+		if(!empty($this->session->userdata('product_package_pattern_search'))){ 
+			$SearchArr = $this->session->userdata('product_package_pattern_search');
+		}
+		if(isset($add_array['id']) && $add_array['id']!= ''){
+			$this->product_model->edit_product($add_array,$add_array['id'],$SearchArr);
+		}else{
+			$last_id =$this->product_model->add_product($add_array,$SearchArr);
+
+			if($add_array['apply_on_existing_account'] == 0){
+				$this->assign_product_to_exiting_account($add_array,$last_id);
+			}
+			$this->session->set_flashdata ( 'astpp_errormsg', gettext('Package created successfully!'));
+			 redirect ( base_url () . 'products/products_edit/'.$last_id.' ' );
+		}
+	}
 	function package_product($add_array){ 
 		$SearchArr = '';
 		if(!empty($this->session->userdata('product_package_pattern_search'))){ 
@@ -804,19 +856,24 @@ class Products extends MX_Controller {
 	}
 	function customer_products_list($accountid, $accounttype) { 
 		$json_data = array ();
-		$select = "products.id as id,order_items.id as id1,products.name,order_items.price,order_items.free_minutes,order_items.setup_fee,order_items.billing_type,order_items.billing_days";
+		$select = "products.id as id,order_items.id as id1,products.name,order_items.price,order_items.free_minutes,order_items.setup_fee,order_items.billing_type,order_items.billing_days,(order_items.free_minutes-IFNULL(FLOOR(counters.used_seconds/60), order_items.free_minutes - order_items.free_minutes )) as used_seconds";
 		$table = "products";
 		$jionTable = array (
 				'order_items',
-				'accounts' 
+				'accounts',
+                'counters', 
+
 		);
 		$jionCondition = array (
 				'products.id = order_items.product_id',
-				'accounts.id = order_items.accountid' 
+				'accounts.id = order_items.accountid', 
+				'products.id = counters.product_id and counters.accountid = accounts.id and counters.package_id = order_items.id',
 		);
 		$type = array (
 				'left',
-				'inner' 
+				'inner',
+				'left', 
+
 		);
 		$categoryinfo = $this->db_model->getSelect("GROUP_CONCAT('''',id,'''') as id","category","code NOT IN ('REFILL','DID')");
 		if($categoryinfo->num_rows > 0 ){ 

@@ -551,8 +551,13 @@ class Db_model extends CI_Model {
 		$drp_array = $drp_array->result ();
 
 		$drp_list = array ();
+
+        if ($table == 'calltype' && $this->uri->segment_array()[1] == 'trunk'){
+            $drp_list[0]=gettext("--Select--");
+        }
+
 		foreach ( $drp_array as $drp_value ) {
-			$drp_list [$drp_value->{$select_params [0]}] = $drp_value->{$select_params [1]};
+			$drp_list [$drp_value->{$select_params [0]}] = gettext($drp_value->{$select_params [1]});
 		}
 		return $drp_list;
 	}
@@ -588,7 +593,7 @@ class Db_model extends CI_Model {
 		$drp_array = $this->getSelect ( $select, $table, $where );
 		$drp_array = $drp_array->result ();
 		$drp_list = array ();
-		$drp_list[0]="--Select--";
+		$drp_list[0]=gettext("--Select--");
 		foreach ( $drp_array as $drp_value ) {
 			if(isset($select_params [2]) && $select_params [2] != ""){
 				$drp_list [$drp_value->{$select_params [0]}] = $drp_value->{$select_params [1]} ."(".$drp_value->{$select_params [2]}.")";
@@ -790,52 +795,27 @@ class Db_model extends CI_Model {
 		if ($search_array != '') {
 			switch ($value) {
 				case "1" :
-					$str1 = $field . " LIKE '%$search_array%'";
-					$this->db->where ( $str1 );
+					$this->db->where ( "convert($field, char) LIKE '%$search_array%'" );
 					break;
 				case "2" :
-					$str1 = $field . " NOT LIKE '%$search_array%'";
-					$this->db->where ( $str1 );
+					$this->db->where ( "convert($field, char) NOT LIKE '%$search_array%'" );
 					break;
 				case "3" :
-                                         if ($field == "pattern") {
-                                                $str1 = $field . " = '^" . $search_array . ".*'";
-                                                $this->db->where ( $str1 );
-                                        }else{
-                                                $this->db->where ( $field, $search_array );
-                                        }
-                                        break;
-                                case "4" :
-                                        if ($field == "pattern") {
-                                                $str1 = $field . " <> '^" . $search_array . ".*'";
-                                                $this->db->where ( $str1 );
-                                        }else{
-                                                 $this->db->where ( $field . ' <>', $search_array );
-                                        }
-                                        break;
+                    $this->db->where ( $field, $search_array );
+                    break;
+                case "4" :
+                   $this->db->where ( $field . ' <>', $search_array );
+                    break;
 				case "5" :
-					if ($field == "pattern") {
-						$str1 = $field . " LIKE '^" . $search_array . "%'";
-						$this->db->where ( $str1 );
-					} else {
-						$str1 = $field . " LIKE '" . $search_array . "%'";
-						$this->db->where ( $str1 );
-					}
-
+					$this->db->where ( "convert($field, char) LIKE '$search_array%'" );
 					break;
 				case "6" :
-					if ($field == "pattern") {
-						$str1 = $field . " LIKE '%" . $search_array . ".*'";
-						$this->db->where ( $str1 );
-					} else {
-						$str1 = $field . " LIKE '%" . $search_array . "'";
-						$this->db->where ( $str1 );
-					}
-
+					$this->db->where ( "convert($field, char) LIKE '%$search_array'" );
 					break;
 			}
 		}
 	}
+
 	function build_search_string($accounts_list_search) {
 		$where = null;
 		$search = $this->session->userdata ( $accounts_list_search );

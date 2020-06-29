@@ -101,10 +101,12 @@ function set_lang($lang = FALSE) {
 
 		//$current_locale = 'fr_FR';
 		putenv ( "LANG=$current_locale" );
+		setcookie ( 'lang', $current_locale, NULL, '/');
 		setlocale ( LC_ALL, $current_locale . ".UTF-8" );
 		setlocale ( LC_MESSAGES, $current_locale );
 		setlocale ( LC_TIME, $current_locale );
 		setlocale ( LC_CTYPE, $current_locale );
+                setlocale ( LC_NUMERIC,  'en_US.UTF-8');
 		//$domain = 'messages';
 
 		$uri_segment = '';

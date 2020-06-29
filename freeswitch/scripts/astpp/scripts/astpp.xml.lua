@@ -30,7 +30,8 @@ function freeswitch_xml_header(xml,destination_number,accountcode,maxlength,call
 	table.insert(xml, [[<context name="]]..params:getHeader("Caller-Context")..[[">]]);
 	table.insert(xml, [[<extension name="]]..destination_number..[[">]]); 
 	table.insert(xml, [[<condition field="destination_number" expression="]]..plus_destination_number(params:getHeader("Caller-Destination-Number"))..[[">]]);
-	table.insert(xml, [[<action application="set" data="effective_destination_number=]]..plus_destination_number(original_destination_number)..[["/>]]);
+	table.insert(xml, [[<action application="set" data="original_destination_number=]]..plus_destination_number(original_destination_number)..[["/>]]);
+	table.insert(xml, [[<action application="set" data="effective_destination_number=]]..plus_destination_number(destination_number)..[["/>]]);
 	Logger.info("maxlength::::::::: "..maxlength);
 	table.insert(xml, [[<action application="set" data="bridge_pre_execute_bleg_app=sched_hangup"/>]]);
 	table.insert(xml, [[<action application="set" data="bridge_pre_execute_bleg_data=+]]..((maxlength) * 60)..[[ normal_clearing"/>]]);
@@ -129,11 +130,11 @@ function freeswitch_xml_header(xml,destination_number,accountcode,maxlength,call
     end   
 
 	if(tonumber(customer_userinfo['is_recording']) == 0) then 
-		table.insert(xml, [[<action application="export" data="is_recording=1"/>]]);
+		table.insert(xml, [[<action application="export" data="is_recording=0"/>]]);
 		table.insert(xml, [[<action application="export" data="media_bug_answer_req=true"/>]]);
 		table.insert(xml, [[<action application="export" data="RECORD_STEREO=true"/>]]);
 		table.insert(xml, [[<action application="export" data="record_sample_rate=8000"/>]]);
-		table.insert(xml, [[<action application="export" data="execute_on_answer=record_session $${recordings_dir}/${uuid}.wav"/>]]);
+		table.insert(xml, [[<action application="export" data="execute_on_answer=record_session $${recordings_dir}/]]..customer_userinfo['id']..[[/${uuid}.mp3"/>]]); -- /${strftime(%Y)}/${strftime(%m)}/${strftime(%d)}
 	end
 	return xml
 end
@@ -164,14 +165,17 @@ function freeswitch_xml_outbound(xml,destination_number,outbound_info,callerid_a
 	local temp_destination_number = destination_number
 	local tr_localization=nil
 	tr_localization = get_localization(outbound_info['provider_id'],'T')
-
+	local tmp_callerid_array = {}
+    for k,v in pairs(callerid_array) do
+        tmp_callerid_array[k] = v
+    end
 	
 	if (tr_localization ~= nil) then
 		tr_localization['out_caller_id_terminate'] = tr_localization['out_caller_id_terminate']:gsub(" ", "")
 		-------------- Caller Id translation ---------	 
-		callerid_array['cid_name'] = do_number_translation(tr_localization['out_caller_id_terminate'],callerid_array['cid_name'])
-		callerid_array['cid_number'] = do_number_translation(tr_localization['out_caller_id_terminate'],callerid_array['cid_number'])    
-		xml = freeswitch_xml_callerid(xml,callerid_array)	    	   	    
+		tmp_callerid_array['cid_name'] = do_number_translation(tr_localization['out_caller_id_terminate'],callerid_array['cid_name'])
+		tmp_callerid_array['cid_number'] = do_number_translation(tr_localization['out_caller_id_terminate'],callerid_array['cid_number'])    
+		xml = freeswitch_xml_callerid(xml,tmp_callerid_array)	    	   	    
     	----------------------------------------------------------------------
 
     	-------------- Destination number translation ---------
@@ -195,6 +199,9 @@ function freeswitch_xml_outbound(xml,destination_number,outbound_info,callerid_a
 	end
     
 	xml_termiantion_rates= "ID:"..outbound_info['outbound_route_id'].."|CODE:"..outbound_info['pattern'].."|DESTINATION:"..outbound_info['comment'].."|CONNECTIONCOST:"..outbound_info['connectcost'].."|INCLUDEDSECONDS:"..outbound_info['includedseconds'].."|COST:"..outbound_info['cost'].."|INC:"..outbound_info['inc'].."|INITIALBLOCK:"..outbound_info['init_inc'].."|TRUNK:"..outbound_info['trunk_id'].."|PROVIDER:"..outbound_info['provider_id'];
+    if (outbound_info['change_calltype'] ~= '') then
+        xml_termiantion_rates= xml_termiantion_rates.."|CHANGECT:"..outbound_info['change_calltype'];
+    end
 
     table.insert(xml, [[<action application="set" data="calltype=STANDARD"/>]]);        
 	table.insert(xml, [[<action application="set" data="termination_rates=]]..xml_termiantion_rates..[["/>]]);        
@@ -213,7 +220,7 @@ function freeswitch_xml_outbound(xml,destination_number,outbound_info,callerid_a
 			local dialplan_variable_data = split(dialplan_variable_value,"=")  
 			Logger.debug("[GATEWAY VARIABLE ] : "..dialplan_variable_data[1] );
 			if( dialplan_variable_data[1] ~= nil and dialplan_variable_data[2] ~= nil) then
-				table.insert(xml, [[<action application="set" data="]]..dialplan_variable_data[1].."="..dialplan_variable_data[2]..[["/>]]);           	    
+				table.insert(xml, [[<action application="export" data="]]..dialplan_variable_value..[["/>]]);
 			end
 		end             
 	end

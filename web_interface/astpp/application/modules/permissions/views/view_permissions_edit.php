@@ -144,12 +144,12 @@ table {
 							<div id="floating-label" class="col-md-12 mb-4">
 								<div class="row">
 									<div class="col-md-3 form-group">
-										<label class="col-md-12 p-0 control-label"><?php echo gettext('Role Name :') ?><span
+										<label class="col-md-12 p-0 control-label"><?php echo gettext('Role Name') ?> :<span
 											class="text-dark"> *</span></label> <input type="hidden"
 											class="error col-md-12 form-control form-control-lg"
 											value="<?= $id ?>" name="id" id="id"> <input type="text"
 											class="error col-md-12 form-control form-control-lg"
-											placeholder="Enter Name" value="<?= $name ?>" name="name"
+											placeholder="<?=gettext('Enter Name')?>" value="<?= $name ?>" name="name"
 											id="name">
 										<div class="text-danger tooltips error_div float-left p-0"
 											id="name_err"></div>
@@ -158,7 +158,7 @@ table {
 										<label class="col-md-12 p-0 control-label"><?php echo gettext('Description') ?> :<span
 											class="text-dark"> *</span></label> <input type="text"
 											class="error form-control form-control-lg"
-											placeholder='Enter Description' value="<?= $description ?>"
+											placeholder='<?=gettext('Enter Description')?>' value="<?= $description ?>"
 											name="description" id="description">
 										<div class="text-danger tooltips error_div float-left p-0"
 											id="description_err"></div>
@@ -255,7 +255,7 @@ foreach ($permission_main_array as $module_key => $module_value) {
 				<?php
                     $sub_module_value[$i] = ($sub_module_value[$i] == 'Delete')?"Delete Multiple":$sub_module_value[$i];
 				 ?>
-				<?php echo gettext(ucfirst(strtolower(str_replace("_"," ",$sub_module_value[$i])))); ?>
+				<?php echo gettext(ucwords(strtolower(str_replace("_"," ",$sub_module_value[$i])))); ?>
 			</td>
 		<?php if(!isset($loop_value_explode[1])){ ?>
 			

@@ -148,7 +148,7 @@ end
 
 -- Do IP base authentication 
 function ipauthentication(destination_number,from_ip)
-	local query = "SELECT "..TBL_IP_MAP..".*, (SELECT number FROM "..TBL_USERS.." where id=accountid AND status=0 AND deleted=0) AS account_code FROM "..TBL_IP_MAP.." WHERE INET_ATON(\"" .. from_ip.. "\") BETWEEN(INET_ATON(SUBSTRING_INDEX(`ip`, '/', 1)) & 0xffffffff ^((0x1 <<(32 -  SUBSTRING_INDEX(`ip`, '/', -1))) -1 )) AND(INET_ATON(SUBSTRING_INDEX(`ip`, '/', 1)) |((0x100000000 >> SUBSTRING_INDEX(`ip`,'/', -1)) -1))  AND \"" .. destination_number .. "\"  LIKE CONCAT(prefix,'%') ORDER BY LENGTH(prefix) DESC LIMIT 1"
+	local query = "SELECT "..TBL_IP_MAP..".*, (SELECT number FROM "..TBL_USERS.." where id=accountid AND status=0 AND deleted=0) AS account_code FROM "..TBL_IP_MAP.." WHERE acl_rule=0 and status=0 and INET_ATON(\"" .. from_ip.. "\") BETWEEN(INET_ATON(SUBSTRING_INDEX(`ip`, '/', 1)) & 0xffffffff ^((0x1 <<(32 -  SUBSTRING_INDEX(`ip`, '/', -1))) -1 )) AND(INET_ATON(SUBSTRING_INDEX(`ip`, '/', 1)) |((0x100000000 >> SUBSTRING_INDEX(`ip`,'/', -1)) -1))  AND \"" .. destination_number .. "\"  LIKE CONCAT(prefix,'%') ORDER BY LENGTH(prefix) DESC LIMIT 1"
 	Logger.debug("[IPAUTHENTICATION] Query :" .. query)
 	local ipinfo;
 	assert (dbh:query(query, function(u)
@@ -253,6 +253,12 @@ function check_blocked_prefix(userinfo,destination_number,number_loop)
     return flag
 end
 
+function tablelength(T)
+  local count = 0
+  for _ in pairs(T) do count = count + 1 end
+  return count
+end
+
 function get_localization (id,type)
 	local localization = nil
 	local query 
@@ -268,44 +274,49 @@ function get_localization (id,type)
     return localization
 end
 
-
-
 -- Do number translation 
 function do_number_translation(number_translation,destination_number)
     local tmp
+    local start_pos, end_pos, len, clen, rule, template
+    Logger.notice("[DONUMBERTRANSLATION] Before Localization CLI/DST (num | rules): " .. destination_number .. " | " .. number_translation)
 
-    tmp = split(number_translation,",")
+    len = 0
+    tmp = split(string.gsub(number_translation, "\"", ""),",")
     for tmp_key,tmp_value in pairs(tmp) do
-      tmp_value = string.gsub(tmp_value, "\"", "")
-      tmp_str = split(tmp_value,"/")      
-      if(tmp_str[1] == '' or tmp_str[1] == nil)then
-	return destination_number
-      end
-      local prefix = string.sub(destination_number,0,string.len(tmp_str[1]));
-      if (prefix == tmp_str[1] or tmp_str[1] == '*') then
-	    Logger.notice("[DONUMBERTRANSLATION] Before Localization CLI/DST : " .. destination_number)
-		if(tmp_str[2] ~= nil) then
-            if (tmp_str[2] == '*') then
-    			destination_number = string.sub(destination_number,(string.len(tmp_str[1])+1))
-            else
-                if (tmp_str[1] == '*') then
-        			destination_number = tmp_str[2] .. destination_number
-                else
-        			destination_number = tmp_str[2] .. string.sub(destination_number,(string.len(tmp_str[1])+1))
-                end
-            end
-		else
-		    destination_number = string.sub(destination_number,(string.len(tmp_str[1])+1))
-		end
-	    Logger.notice("[DONUMBERTRANSLATION] After Localization CLI/DST : " .. destination_number)
+      tmp_str = split(tmp_value,"/")
+      if(tmp_str[1] ~= '' and tmp_str[1] ~= nil and tmp_str[2] ~= '' and tmp_str[2] ~= nil)then
+        Logger.notice("[DONUMBERTRANSLATION] Check num -> pattern | template : " .. destination_number .. " -> " .. tmp_str[1] .. " | " .. tmp_str[2])
+        start_pos, end_pos = string.find(destination_number, tmp_str[1])
+        if(start_pos ~= nil and end_pos ~= nil)then
+          clen = end_pos - start_pos + 1
+          if(clen > len)then
+            rule = tmp_str[1]
+            template = tmp_str[2]
+            len = clen
+          end
+        end
       end
     end
-    return destination_number
+
+    if(len > 0)then
+      local res = ''
+      local s = string.match(template, "^%[(.+)%]$")
+      if(s)then
+        Logger.notice("[DONUMBERTRANSLATION] USE RND TEMPLATE from list: " .. s)
+        tmp = split(s,";")
+        template = tmp[math.random(1,tablelength(tmp))]
+      end
+
+      res = string.gsub(destination_number, rule, template)
+      Logger.notice("[DONUMBERTRANSLATION] After Localization CLI/DST : " .. res .. " (match len = " .. len .. ", rule = " .. rule .. ", template = " .. template .. ")" )
+      return res
+    else
+      Logger.notice("[DONUMBERTRANSLATION] After Localization CLI/DST : " .. destination_number )
+      return destination_number
+    end
 end
 
-
 -- Find Max length
-
 function get_call_maxlength(userinfo,destination_number,call_direction,number_loop,config,didinfo)     
     local maxlength = 0
     local rates
@@ -541,9 +552,9 @@ function get_carrier_rates(destination_number,number_loop_str,ratecard_id,rate_c
 	local trunk_id=0     
 	local query
 	if(routing_type == 1) then
-		query = "SELECT TK.id as trunk_id,TK.name as trunk_name,TK.codec,GW.name as path,GW.dialplan_variable,TK.provider_id,TR.init_inc,TK.status,TK.maxchannels,TK.cps,TK.leg_timeout,TR.pattern,TR.id as outbound_route_id,TR.connectcost,TR.comment,TR.includedseconds,TR.cost,TR.inc,TR.prepend,TR.strip,(select name from "..TBL_GATEWAYS.." where status=0 AND id = TK.failover_gateway_id) as path1,(select name from "..TBL_GATEWAYS.." where status=0 AND id = TK.failover_gateway_id1) as path2 FROM (select * from "..TBL_TERMINATION_RATES.." order by LENGTH (pattern) DESC) as TR "..TBL_TRUNKS.." as TK,"..TBL_GATEWAYS.." as GW WHERE GW.status=0 AND GW.id= TK.gateway_id AND TK.status=0 AND TK.id= TR.trunk_id AND "..number_loop_str.." AND TR.status = 0 "
+		query = "SELECT TK.id as trunk_id,TK.name as trunk_name,TK.codec,GW.name as path,GW.dialplan_variable,TK.provider_id,TR.init_inc,TK.status,TK.maxchannels,TK.cps,TK.leg_timeout,TR.pattern,TR.id as outbound_route_id,TR.connectcost,TR.comment,TR.includedseconds,TR.cost,TR.inc,TR.prepend,TR.strip,(select C.call_type from "..TBL_CALLTYPE.." C where C.id=TK.change_calltype) as change_calltype,(select name from "..TBL_GATEWAYS.." where status=0 AND id = TK.failover_gateway_id) as path1,(select name from "..TBL_GATEWAYS.." where status=0 AND id = TK.failover_gateway_id1) as path2 FROM (select * from "..TBL_TERMINATION_RATES.." order by LENGTH (pattern) DESC) as TR "..TBL_TRUNKS.." as TK,"..TBL_GATEWAYS.." as GW WHERE GW.status=0 AND GW.id= TK.gateway_id AND TK.status=0 AND TK.id= TR.trunk_id AND "..number_loop_str.." AND TR.status = 0 "
 	else
-		query = "SELECT TK.id as trunk_id,TK.name as trunk_name,TK.codec,GW.name as path,GW.dialplan_variable,TK.provider_id,TR.init_inc,TK.status,TK.maxchannels,TK.cps,TK.leg_timeout,TR.pattern,TR.id as outbound_route_id,TR.connectcost,TR.comment,TR.includedseconds,TR.cost,TR.inc,TR.prepend,TR.strip,(select name from "..TBL_GATEWAYS.." where status=0 AND id = TK.failover_gateway_id) as path1,(select name from "..TBL_GATEWAYS.." where status=0 AND id = TK.failover_gateway_id1) as path2 FROM "..TBL_TERMINATION_RATES.." as TR,"..TBL_TRUNKS.." as TK,"..TBL_GATEWAYS.." as GW WHERE GW.status=0 AND GW.id= TK.gateway_id AND TK.status=0 AND TK.id= TR.trunk_id AND "..number_loop_str.." AND TR.status = 0 "
+		query = "SELECT TK.id as trunk_id,TK.name as trunk_name,TK.codec,GW.name as path,GW.dialplan_variable,TK.provider_id,TR.init_inc,TK.status,TK.maxchannels,TK.cps,TK.leg_timeout,TR.pattern,TR.id as outbound_route_id,TR.connectcost,TR.comment,TR.includedseconds,TR.cost,TR.inc,TR.prepend,TR.strip,(select C.call_type from "..TBL_CALLTYPE.." C where C.id=TK.change_calltype) as change_calltype,(select name from "..TBL_GATEWAYS.." where status=0 AND id = TK.failover_gateway_id) as path1,(select name from "..TBL_GATEWAYS.." where status=0 AND id = TK.failover_gateway_id1) as path2 FROM "..TBL_TERMINATION_RATES.." as TR,"..TBL_TRUNKS.." as TK,"..TBL_GATEWAYS.." as GW WHERE GW.status=0 AND GW.id= TK.gateway_id AND TK.status=0 AND TK.id= TR.trunk_id AND "..number_loop_str.." AND TR.status = 0 "
 	end
 	if(rate_carrier_id and rate_carrier_id ~= nil and rate_carrier_id ~= '0' and string.len(rate_carrier_id) >= 1 ) then
 		query = query.." AND TR.trunk_id IN ("..rate_carrier_id..") "

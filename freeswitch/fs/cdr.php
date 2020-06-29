@@ -65,7 +65,7 @@ if (isset ( $_SERVER ["CONTENT_TYPE"] ) && $_SERVER ["CONTENT_TYPE"] == "applica
 	$db->run ( "SET NAMES utf8" );
 	//$data = json_decode ( file_get_contents ( "php://input" ), true );
 	$data = file_get_contents("php://input");
-    $data = utf8_encode($data);
+//    $data = utf8_encode($data);
 	$data = json_decode($data,true);
 
 	// error_log(print_r($data,true));
@@ -81,6 +81,8 @@ if (isset ( $_SERVER ["CONTENT_TYPE"] ) && $_SERVER ["CONTENT_TYPE"] == "applica
 	//To run custom code
 	if(function_exists('custom_start_hook'))
 		custom_start_hook($data, $db, $logger, $decimal_points,$config);
+
+    $data ['variables'] ['fs_node'] = isset($config['fs_node'])?$config['fs_node']:NULL;
 
 	if ($data ['variables'] ['calltype'] == "CALLINGCARD") {
 		if (isset ( $data ['variables'] ['originating_leg_uuid'] )) {

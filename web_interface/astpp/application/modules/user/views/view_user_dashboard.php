@@ -101,7 +101,7 @@
                                 <div class="col-lg-8 col-7 float-left py-5">
                                     <div class="h1" id="balance">0</div>
                                     <?php
-										$variable =$accountinfo['posttoexternal']==1 ? 'Credit' : gettext('Balance');  
+										$variable =$accountinfo['posttoexternal']==1 ? gettext('Credit') : gettext('Balance');  
 									?>
                                     <h3><?php echo $variable." (".$currency.")";?></h3>
                                 </div>
@@ -127,7 +127,7 @@
                                   <th scope="col"><?php echo gettext('Name') ?></th>
                                   <th scope="col"><?php echo gettext('Date'); ?></th>
                                   <th scope="col"><?php echo gettext('Order');?></th>
-                                  <th scope="col"><?php echo gettext('Payment method'); ?></th>
+                                  <th scope="col"><?php echo gettext('Payment Method'); ?></th>
 				  <th scope="col"><?php echo gettext('Quantity'); ?></th>
                                   <th scope="col"><?php echo gettext('Setup Fee'); ?> [<?php echo $currency;?>]</th>
                                   <th scope="col"><?php echo gettext('Price');?> [<?php echo $currency;?>]</th>
@@ -155,12 +155,12 @@
 																			echo "<td>".$this->common->get_field_name('name',"products",array('id'=>$val['product_id']))."</td>";
 											                echo "<td>".$val['order_date']."</td>";
 											                echo "<td>".$val['id1']."</td>";
-											                echo "<td>".$val['payment_gateway']."</td>";
+											                echo "<td>".gettext($val['payment_gateway'])."</td>";
 
      echo "<td>".$val['quantity']."</td>";
 											                echo "<td>".$this->common_model->calculate_currency_customer($val ['setup_fee'])."</td>";
 											                echo "<td>".$this->common_model->calculate_currency_customer($val ['price'])."</td>";
-											                echo "<td>".$val['payment_status']."</td>";
+											                echo "<td>".gettext(ucfirst(strtolower($val['payment_status'])))."</td>";
 											                echo "</tr>";
 																		}
 																	}
@@ -202,9 +202,9 @@
 										                	echo "<td>".$this->common_model->calculate_currency_customer($val ['price'])."</td>";
 										                	echo "<td>".$this->common_model->calculate_currency_customer($val ['setup_fee'])."</td>";
 										                	if($val['billing_type'] == "0"){
-						                          	echo "<td><span class='badge badge-success'>One time</span></td>";
+						                          	echo "<td><span class='badge badge-success'>".gettext('One Time')."</span></td>";
 						                          }else{
-						                          	echo "<td><span class='badge badge-danger'>Recurring</span></td>";
+						                          	echo "<td><span class='badge badge-danger'>".gettext('Recurring')."</span></td>";
 						                          }
 						                          echo "<td>".$val['billing_days']."</td>";
 						                          echo "</tr>";
@@ -239,7 +239,7 @@
                                   <th scope="col"><?php echo gettext('Debit');?> [<?php echo $currency;?>]</th>
                                   <th scope="col"><?php echo gettext('Disposition');?></th>
                                   <th scope="col"><?php echo gettext('Call Type');?></th>
-                                  <th scope="col"><?php echo gettext("Direction");?></th>
+                                  <th scope="col"><?php echo gettext('Direction');?></th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -258,7 +258,8 @@
 										                	echo "<td>".$val['callerid']."</td>";
 										                	echo "<td>".$val['callednum']."</td>";
 										                	echo "<td>".$val['notes']."</td>";
-										                	echo "<td>".$val['billseconds']."</td>";
+													$dur = $val['billseconds'] > 0 ? floor($val['billseconds']/60).":".sprintf("%02d", $val['billseconds']%60):"00:00";
+										                	echo "<td>".$dur."</td>";
 						                          if($accountinfo['type'] =='3'){
 						                          	echo "<td>".$this->common_model->calculate_currency_customer($val ['cost'])."</td>";
 						                          }else{
@@ -267,9 +268,9 @@
 						                          echo "<td>".$val['disposition']."</td>";
 						                          echo "<td>".$val['calltype']."</td>";
 						                          if($val['call_direction'] == "outbound"){
-						                          	echo "<td><span class='badge badge-success'>".$val['call_direction']."</span></td>";
+						                          	echo "<td><span class='badge badge-success'>".gettext(ucfirst(strtolower($val['call_direction'])))."</span></td>";
 						                          }else{
-						                          	echo "<td><span class='badge badge-danger'>".$val['call_direction']."</span></td>";
+						                          	echo "<td><span class='badge badge-danger'>".gettext(ucfirst(strtolower($val['call_direction'])))."</span></td>";
 						                          }
 						                          echo "</tr>";
 																		}

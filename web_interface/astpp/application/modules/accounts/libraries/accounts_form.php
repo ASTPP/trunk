@@ -63,6 +63,7 @@ class Accounts_form extends common
         $allow_lc_charge = null;
         $allow_loss_less_routing = null;
         $allow_recording = null;
+        $record_store_reiod = null;
         $allow_ip_management = null;
         $balnce_below = null;
         $reseller = null;
@@ -165,7 +166,7 @@ class Accounts_form extends common
                     'required|integer|greater_than[0]|is_unique[' . $account_val . ']',
                     'tOOL TIP',
                     '',
-                    ' <i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="Generate Account" class="change_number align-self-end text-success fa fa-refresh" ></i>'
+                    ' <i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="'.gettext('Generate Account').'" class="change_number align-self-end text-success fa fa-refresh" ></i>'
                 );
             } else {
                 $account = array(
@@ -182,7 +183,7 @@ class Accounts_form extends common
                     'required|integer|greater_than[0]|is_unique[' . $account_val . ']',
                     'tOOL TIP',
                     '',
-                    ' <i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="Generate Account" class="change_number align-self-end text-success fa fa-refresh" ></i>'
+                    ' <i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="'.gettext('Generate Account').'" class="change_number align-self-end text-success fa fa-refresh" ></i>'
                 );
             }
         } else {
@@ -200,7 +201,7 @@ class Accounts_form extends common
                     'required|integer|greater_than[0]|is_unique[' . $account_val . ']|is_match_number[' . $account_val . ']',
                     'tOOL TIP',
                     '',
-                    ' <i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="Generate Account" class="change_number align-self-end text-success fa fa-refresh" ></i>'
+                    ' <i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="'.gettext('Generate Account').'" class="change_number align-self-end text-success fa fa-refresh" ></i>'
                 );
             } else {
                 $account = array(
@@ -217,7 +218,7 @@ class Accounts_form extends common
                     'required|integer|greater_than[0]|is_unique[' . $account_val . ']',
                     'tOOL TIP',
                     '',
-                    ' <i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="Generate Account" class="change_number align-self-end text-success fa fa-refresh" ></i>'
+                    ' <i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="'.gettext('Generate Account').'" class="change_number align-self-end text-success fa fa-refresh" ></i>'
                 );
             }
         }
@@ -416,6 +417,32 @@ class Accounts_form extends common
                 '',
                 'custom_status_recording'
             );
+            $display_recording = array(
+                gettext('Display recording'),
+                'is_records_visible',
+                'SELECT',
+                '',
+                '',
+                'tOOL TIP',
+                'Please Enter account number',
+                '',
+                '',
+                '',
+                'custom_status_recording'
+            );
+            $record_store_reiod = array(
+                gettext('Record store period'),
+                'record_store_period',
+                'SELECT',
+                '',
+                '',
+                'tOOL TIP',
+                'Please Enter account number',
+                '',
+                '',
+                '',
+                'custom_record_periods'
+            );
             $allow_ip_management = array(
                 gettext('Allow IP Management'),
                 'allow_ip_management',
@@ -460,10 +487,10 @@ class Accounts_form extends common
                 'required|chk_password_expression',
                 'tOOL TIP',
                 '',
-                '<i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="Reset Password" class="change_pass align-self-end text-success fa fa-refresh" ></i>'
+                '<i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="'.gettext('Reset Password').'" class="change_pass align-self-end text-success fa fa-refresh" ></i>'
             );
-            $change_password = '<i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="Reset Password" onmouseover="seetext(password)" onmouseout="hidepassword(password)" class="change_pass align-self-end text-success fa fa-refresh" ></i>';
-            $change_pin = '<i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="Generate Pin" class="change_pin align-self-end text-success fa fa-refresh" ></i>';
+            $change_password = '<i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="'.gettext('Reset Password').'" onmouseover="seetext(password)" onmouseout="hidepassword(password)" class="change_pass align-self-end text-success fa fa-refresh" ></i>';
+            $change_pin = '<i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="'.gettext('Generate Pin').'" class="change_pin align-self-end text-success fa fa-refresh" ></i>';
 
             $sip_device_arr = array(
                 'Create SIP Device',
@@ -591,6 +618,8 @@ class Accounts_form extends common
             $allow_local_calls,
             $allow_lc_charge,
             $allow_recording,
+            $display_recording,
+            $record_store_reiod,
             $allow_ip_management,
             array(
                 gettext('Notifications'),
@@ -659,6 +688,42 @@ class Accounts_form extends common
                 'INPUT',
                 array(
                     'name' => 'company_name',
+                    'size' => '15',
+                    'class' => 'text field medium'
+                ),
+                'trim|xss_clean',
+                'tOOL TIP',
+                ''
+            ),
+            array(
+                gettext('Company description'),
+                'INPUT',
+                array(
+                    'name' => 'company_desc',
+                    'size' => '15',
+                    'class' => 'text field medium'
+                ),
+                'trim|xss_clean',
+                'tOOL TIP',
+                ''
+            ),
+            array(
+                gettext('Company short description'),
+                'INPUT',
+                array(
+                    'name' => 'company_shortdesc',
+                    'size' => '15',
+                    'class' => 'text field medium'
+                ),
+                'trim|xss_clean',
+                'tOOL TIP',
+                ''
+            ),
+            array(
+                gettext('Company manager'),
+                'INPUT',
+                array(
+                    'name' => 'company_manager',
                     'size' => '15',
                     'class' => 'text field medium'
                 ),
@@ -815,7 +880,21 @@ class Accounts_form extends common
                 'build_concat_dropdown',
                 '',
                 array()
-            )
+            ),
+            array(
+                gettext('Notes'),
+                'TEXTAREA',
+                array(
+                    'name' => 'notes',
+                    'size' => '20',
+                    'cols' => '50',
+                    'rows' => '3',
+                    'class' => "form-control form-control-lg mit-20 text col-md-12 field medium"
+                ),
+                '',
+                'tOOL TIP',
+                ''
+            ),
         );
 
         $form[gettext('Billing Settings')] = array(
@@ -972,6 +1051,82 @@ class Accounts_form extends common
                 ''
             )
         );
+
+        $form[gettext('Invoice Configuration')] = array(
+            array(
+                gettext('INN'),
+                'INPUT',
+                array(
+                    'name' => 'inn',
+                    'size' => '20',
+                    'class' => "text field medium"
+                ),
+                '',
+                'tOOL TIP',
+                'Please Enter account number'
+            ),
+            array(
+                gettext('Bank name'),
+                'INPUT',
+                array(
+                    'name' => 'bank_name',
+                    'size' => '20',
+                    'class' => "text field medium"
+                ),
+                '',
+                'tOOL TIP',
+                'Please Enter account number'
+            ),
+            array(
+                gettext('KPP'),
+                'INPUT',
+                array(
+                    'name' => 'bank_kpp',
+                    'size' => '20',
+                    'class' => "text field medium"
+                ),
+                '',
+                'tOOL TIP',
+                'Please Enter account number'
+            ),
+            array(
+                gettext('Bank RS'),
+                'INPUT',
+                array(
+                    'name' => 'bank_rs',
+                    'size' => '20',
+                    'class' => "text field medium"
+                ),
+                '',
+                'tOOL TIP',
+                'Please Enter account number'
+            ),
+            array(
+                gettext('Bank KS'),
+                'INPUT',
+                array(
+                    'name' => 'bank_ks',
+                    'size' => '20',
+                    'class' => "text field medium"
+                ),
+                '',
+                'tOOL TIP',
+                'Please Enter account number'
+            ),
+            array(
+                gettext('Bank BIK'),
+                'INPUT',
+                array(
+                    'name' => 'bank_bik',
+                    'size' => '20',
+                    'class' => "text field medium"
+                ),
+                '',
+                'tOOL TIP',
+                'Please Enter account number'
+            ),
+	);
+
         $form['button_save'] = array(
             'name' => 'action',
             'content' => gettext('Save'),
@@ -1392,7 +1547,7 @@ class Accounts_form extends common
                 'name' => 'acccount_charges_form'
             )
         );
-        $form[gettext('​Refill information')] = array(
+        $form[gettext('Refill information')] = array(
             array(
                 '',
                 'HIDDEN',
@@ -1540,7 +1695,7 @@ class Accounts_form extends common
                     'required|integer|greater_than[0]|is_unique[' . $account_val . ']',
                     'tOOL TIP',
                     '',
-                    ' <i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="Generate Account" class="change_number align-self-end text-success fa fa-refresh" ></i>'
+                    ' <i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="'.gettext('Generate Account').'" class="change_number align-self-end text-success fa fa-refresh" ></i>'
                 );
             } else {
                 $account = array(
@@ -1557,7 +1712,7 @@ class Accounts_form extends common
                     'required|integer|greater_than[0]|is_unique[' . $account_val . ']',
                     'tOOL TIP',
                     '',
-                    ' <i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="Generate Account" class="change_number align-self-end text-success fa fa-refresh" ></i>'
+                    ' <i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="'.gettext('Generate Account').'" class="change_number align-self-end text-success fa fa-refresh" ></i>'
                 );
             }
         } else {
@@ -1575,7 +1730,7 @@ class Accounts_form extends common
                     'required|integer|greater_than[0]|is_unique[' . $account_val . ']|is_match_number[' . $account_val . ']',
                     'tOOL TIP',
                     '',
-                    ' <i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="Generate Account" class="change_number align-self-end text-success fa fa-refresh" ></i>'
+                    ' <i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="'.gettext('Generate Account').'" class="change_number align-self-end text-success fa fa-refresh" ></i>'
                 );
             } else {
                 $account = array(
@@ -1592,7 +1747,7 @@ class Accounts_form extends common
                     'required|integer|greater_than[0]|is_unique[' . $account_val . ']|is_match_number[' . $account_val . ']',
                     'tOOL TIP',
                     '',
-                    ' <i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="Generate Account" class="change_number align-self-end text-success fa fa-refresh" ></i>'
+                    ' <i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="'.gettext('Generate Account').'" class="change_number align-self-end text-success fa fa-refresh" ></i>'
                 );
             }
         }
@@ -1874,7 +2029,7 @@ class Accounts_form extends common
                 ''
             );
             $low_balance_alert_email = array(
-                gettext('Low balance Alert Email'),
+                gettext('Low Balance Alert Email'),
                 'notify_flag',
                 'SELECT',
                 '',
@@ -1916,7 +2071,7 @@ class Accounts_form extends common
                 'required|chk_password_expression',
                 'tOOL TIP',
                 '',
-                '<i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="Reset Password" class="change_pass align-self-end text-success fa fa-refresh" ></i>'
+                '<i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="'.gettext('Reset Password').'" class="change_pass align-self-end text-success fa fa-refresh" ></i>'
             );
         }
         $form['forms'] = array(
@@ -2208,6 +2363,20 @@ class Accounts_form extends common
                 '',
                 array()
             ),
+            array(
+                gettext('Notes'),
+                'TEXTAREA',
+                array(
+                    'name' => 'notes',
+                    'size' => '20',
+                    'cols' => '50',
+                    'rows' => '3',
+                    'class' => "form-control form-control-lg mit-20 text col-md-12 field medium"
+                ),
+                '',
+                'tOOL TIP',
+                ''
+            ),
             $invoice_config
         );
         $form[gettext('Billing Settings')] = array(
@@ -2242,7 +2411,7 @@ class Accounts_form extends common
                 ''
             ),
             array(
-                'Rate Group',
+                gettext('Rate Group'),
                 array(
                     'name' => 'pricelist_id',
                     'id' => 'pricelist_id'
@@ -2630,7 +2799,7 @@ class Accounts_form extends common
                 'required|chk_password_expression',
                 'tOOL TIP',
                 '',
-                '<i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="Reset Password" class="change_pass align-self-end text-success fa fa-refresh" ></i>'
+                '<i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="'.gettext('Reset Password').'" class="change_pass align-self-end text-success fa fa-refresh" ></i>'
             );
             if (isset(common_model::$global_config['system_config']['minimum_accountlength'])) {
                 $account = array(
@@ -2640,7 +2809,7 @@ class Accounts_form extends common
                     'required|is_unique[' . $account_val . ']',
                     'tOOL TIP',
                     '',
-                    '<i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="Generate Account" class="change_number align-self-end text-success fa fa-refresh" ></i>'
+                    '<i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="'.gettext('Generate Account').'" class="change_number align-self-end text-success fa fa-refresh" ></i>'
                 );
             } else {
                 $account = array(
@@ -2650,7 +2819,7 @@ class Accounts_form extends common
                     'required|is_unique[' . $account_val . ']|is_match_number[' . $account_val . ']',
                     'tOOL TIP',
                     '',
-                    '<i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="Generate Account" class="change_number align-self-end text-success fa fa-refresh" ></i>'
+                    '<i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="'.gettext('Generate Account').'" class="change_number align-self-end text-success fa fa-refresh" ></i>'
                 );
             }
 
@@ -5517,7 +5686,7 @@ class Accounts_form extends common
     function set_block_pattern_action_buttons($id)
     {
         $ret_url = '';
-        $ret_url .= '<a href="/did/delete/' . $id . '/" class="icon delete_image" title="Delete" onClick="return get_alert_msg();">&nbsp;</a>';
+        $ret_url .= '<a href="/did/delete/' . $id . '/" class="icon delete_image" title="'.gettext('Delete').'" onClick="return get_alert_msg();">&nbsp;</a>';
         return $ret_url;
     }
 

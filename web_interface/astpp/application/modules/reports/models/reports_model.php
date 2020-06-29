@@ -33,9 +33,20 @@ class Reports_model extends CI_Model
     {
         $this->db_model->build_search('customer_cdr_list_search');
         $account_data = $this->session->userdata("accountinfo");
+
         if ($this->session->userdata('logintype') == 1 || $this->session->userdata('logintype') == 5) {
             $where['reseller_id'] = $account_data['type'] == 1 ? $account_data['id'] : 0;
         }
+
+        $types = array();
+
+        if (intval($this->session->userdata('customer_cdr_id'))> 0) {
+            $where['accountid'] = $this->session->userdata('customer_cdr_id');
+            $types = ['0'];
+        } else {
+            $types = ['0', '3'];
+        }
+
         $table_name = 'cdrs';
         if ($this->session->userdata('advance_search_date') == 1) {
             $where['callstart >= '] = date("Y-m-d") . " 00:00:00";
@@ -46,10 +57,6 @@ class Reports_model extends CI_Model
             }
         }
 
-        $types = array(
-            '0',
-            '3'
-        );
         $this->db->where_in('type', $types);
         if (isset($where) && $where != "") {
             $this->db->where($where);
@@ -62,7 +69,7 @@ class Reports_model extends CI_Model
         if ($flag) {
             if (! $export)
                 $this->db->limit($limit, $start);
-            $this->db->select('callstart,is_recording,sip_user,call_direction,callerid,callednum,pattern,notes,billseconds,disposition,debit,cost,accountid,pricelist_id,calltype,trunk_id,uniqueid');
+            $this->db->select('callstart,is_recording,sip_user,call_direction,callerid,callednum,pattern,notes,billseconds,disposition,debit,cost,accountid,pricelist_id,calltype,trunk_id,uniqueid,(select destination from ratedeck where id=did) as did');
         } else {
             $this->db->select('count(*) as count,sum(billseconds) as billseconds,sum(debit) as total_debit,SUM(CASE WHEN calltype = "FREE" THEN debit ELSE 0 END) AS free_debit,sum(cost) as total_cost,group_concat(distinct(pricelist_id)) as pricelist_ids,group_concat(distinct(trunk_id)) as trunk_ids,group_concat(distinct(accountid)) as accounts_ids');
         }

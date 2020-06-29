@@ -12,7 +12,7 @@
 		<? start_block_marker('page-title') ?><? end_block_marker() ?> | <?php echo $user_header; ?>
 	<?php
 	} else { ?>
-		<? start_block_marker('page-title') ?><? end_block_marker() ?> | ASTPP - Open Source Voip Billing Solution
+		<? start_block_marker('page-title') ?><? end_block_marker() ?> | SmartSip
 	<?php
 	}
 	?>
@@ -141,6 +141,7 @@
      <script src="<?php echo base_url(); ?>assets/js/jquery-1.12.4.js"></script>
      <script type="text/javascript" src="<?php echo base_url(); ?>assets/js/bootstrap.bundle.min.js"></script>
 	 <script type="text/javascript" src="<?php echo base_url(); ?>assets/js/bootstrap-select.js"></script>  
+     <script type="text/javascript" src="<?php echo base_url(); ?>assets/js/i18n/defaults-<?=$_COOKIE["lang"]?>.js"></script>
      <script type="text/javascript" src="<?php echo base_url(); ?>assets/js/jquery.datetimepicker.min.js"></script>
 
      <script type="text/javascript" src="<?php echo base_url(); ?>assets/js/modernizr.custom.js"></script>
@@ -152,13 +153,13 @@
 
 
 
-     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery-browser/0.1.0/jquery.browser.js"></script>
+     <script type="text/javascript" src="<?php echo base_url(); ?>assets/js/jquery.browser.js"></script>
  	 <!--<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
   -->
 
      <script type="text/javascript" src="<?php echo base_url(); ?>assets/js/facebox.js"></script>
-     <script type="text/javascript" src="<?php echo base_url(); ?>assets/js/flexigrid.js"></script>
-     <script type="text/javascript" src="<?php echo base_url(); ?>assets/js/module_js/generate_grid.js"></script>
+     <script type="text/javascript" src="<?php echo base_url(); ?>assets/js/flexigrid.php"></script>
+     <script type="text/javascript" src="<?php echo base_url(); ?>assets/js/module_js/generate_grid.php"></script>
         
     <noscript>
       <div id="noscript-warning">
@@ -336,8 +337,19 @@ $(document).ready(function(){
 				if(common_model::$global_config['system_config']['opensips']==1 && $sub_menu_key=="Customers") {?>
 				    <li class="dropdown-submenu"><a class="dropdown-item dropdown-toggle" href="<?php echo base_url(); ?>accounts/customer_list/"><span><?= gettext($sub_menu_key);?></span></a>
 				<?php }
-				if(($acc_info['type']==3 || $acc_info['type']== 0) && $acc_info['allow_ip_management']== 1 && strtolower($sub_menu_lables["menu_label"]) !='ip settings'){ ?>
-				    <li class="dropdown-submenu"><a class="nav-link dropdown-toggle dropdown-item" href="#"><span><?= gettext($sub_menu_key);?></span></a>
+				if(
+				    ($acc_info['type']==3 || $acc_info['type']== 0 || $acc_info['type']==-1)
+                    && $acc_info['allow_ip_management']== 1
+                    && strtolower($sub_menu_lables["menu_label"]) !='ip settings'
+                    && $sub_menu_values[0]['menu_type']!='service'
+                    && $sub_menu_values[0]['module']!='supportticket'
+                    && $sub_menu_values[0]['module']!='accounts'
+                    && $sub_menu_values[0]['module']!='languages'
+                    && $sub_menu_values[0]['module']!='customer'
+                    && $sub_menu_values[0]['module']!='customerReport'
+                ){
+				    ?>
+				    <li class="dropdown-submenu"><a class="nav-link dropdown-toggle dropdown-item" href="#"><span><?=gettext($sub_menu_key)?></span></a>
 					<? }
 				}else{ ?>
 					    <li class="dropdown-submenu"></a>
@@ -375,7 +387,7 @@ $(document).ready(function(){
 	$master_login_details=$this->session->userdata('master_login_details');
 	if(isset($master_login_details) && $master_login_details !=''){
 		$admin_id =$master_login_details['master_login_id'];
-		$sub_login_arr = "<a href='".base_url()."login/login_as_admin/".$admin_id."' title='Re-Login in Admin'><i class='fa fa-sign-in mr-2' aria-hidden='true'></i></a>";
+		$sub_login_arr = "<a href='".base_url()."login/login_as_admin/".$admin_id."' title='".gettext('Re-Login in Admin')."'><i class='fa fa-sign-in mr-2' aria-hidden='true'></i></a>";
 		echo $sub_login_arr;
 	}
 ?>
@@ -390,7 +402,7 @@ $(document).ready(function(){
 		<? }
 				if($this->session->userdata('logintype')!=2 && $this->session->userdata('logintype')!=4){
 					$result=(array)$this->db->get_where('accounts',array("id"=>$acc_info['id']),1)->first_row();
-			$variable =$result['posttoexternal']==1 ? 'Credit' : gettext('Bal');  
+			$variable =$result['posttoexternal']==1 ? gettext('Credit') : gettext('Bal');  
 			$amount=$result['posttoexternal']==1 ? $result['credit_limit']-$result['balance'] :$result['balance'];
 
 			
@@ -436,7 +448,7 @@ $(document).ready(function(){
 		    <? if($this->session->userdata('userlevel_logintype') == '-1'){?>
 
 		    
-		    <li><a class="dropdown-item" href="http://astpp.readthedocs.io" target="_blank"><i class="fa fa-file-text"></i> &nbsp;<?php echo gettext('Documentation'); ?></a></li>
+		    <li><a class="dropdown-item" href="/wiki/doku.php" target="_blank"><i class="fa fa-file-text"></i> &nbsp;<?php echo gettext('Documentation'); ?></a></li>
 
 <li><a class="dropdown-item" href="https://github.com/iNextrix/ASTPP/issues" target="_blank"><i class= "fa fa-bug"></i> &nbsp;<?php echo gettext('Report a Bug'); ?></a></li>
 <li><a class="dropdown-item" href="http://www.astppbilling.org/mobile-dialers/" target="_blank"><i class="fa fa-mobile fa-lg" aria-hidden="true"></i> &nbsp;<?php echo gettext('Get App'); ?></a></li>

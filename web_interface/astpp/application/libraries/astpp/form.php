@@ -242,7 +242,22 @@ class Form {
 									$fieldvalue [12] 
 							) );
 							
-							if ($fieldset_key == gettext ( 'System Configuration Information' ) || ($fieldset_key == 'Rate Information' && $fieldvalue [0] == 'Force Trunk') || ($fieldset_key == 'Billing Information' && $fieldvalue [0] == 'Force Trunk') || ($fieldset_key == 'Card Information' && $fieldvalue [0] == 'Rate Group') || ($fieldset_key == 'Billing Information' && $fieldvalue [0] == 'Account')|| ($fieldset_key == 'Rate Information' && ($fieldvalue [0] == 'Country' || $fieldvalue [0] == 'Call Type'))|| ($fieldset_key == 'Ratedeck Information' && ($fieldvalue [0] == 'Call Type')) || $fieldset_key == 'Freeswitch Devices' && $fieldvalue [0] == 'Rate Group' || ($fieldset_key == 'Origination Rate Add/Edit' && $fieldvalue [0] == 'Trunks') || $fieldset_key == 'Billing Information' && $fieldvalue [0] == 'Rate Group' || ($fieldset_key == 'Information' && $fieldvalue [0] == 'Failover GW Name #1') || ($fieldset_key == 'Information' && $fieldvalue [0] == 'Failover GW Name #2') || ($fieldset_key == 'Information' && $fieldvalue [0] == 'Rate Group') || ($fieldset_key == 'Sip Devices' && $fieldvalue [0] == 'Sip Profile') || ($fieldset_key == 'Sip Devices' && $fieldvalue [0] == 'Account') || ($fieldset_key == 'Account Settings' && $fieldvalue [0] == 'Localization')) {
+							if (    $fieldset_key == gettext('System Configuration Information')
+							    || ($fieldset_key == gettext('Rate Information') && $fieldvalue [0] == gettext('Force Trunk'))
+							    || ($fieldset_key == gettext('Billing Information') && $fieldvalue [0] == gettext('Force Trunk'))
+							    || ($fieldset_key == gettext('Card Information') && $fieldvalue [0] == gettext('Rate Group'))
+							    || ($fieldset_key == gettext('Billing Information') && $fieldvalue [0] == gettext('Account'))
+							    || ($fieldset_key == gettext('Rate Information') && ($fieldvalue [0] == gettext('Country') || $fieldvalue [0] == gettext('Call Type')))
+							    || ($fieldset_key == gettext('Ratedeck Information') && ($fieldvalue [0] == gettext('Call Type')))
+							    || ($fieldset_key == gettext('Freeswitch Devices') && $fieldvalue [0] == gettext('Rate Group'))
+							    || ($fieldset_key == gettext('Origination Rate Add/Edit') && $fieldvalue [0] == gettext('Trunks'))
+							    || ($fieldset_key == gettext('Billing Information') && $fieldvalue [0] == gettext('Rate Group'))
+							    || ($fieldset_key == gettext('Information') && $fieldvalue [0] == gettext('Failover GW Name #1'))
+							    || ($fieldset_key == gettext('Information') && $fieldvalue [0] == gettext('Failover GW Name #2'))
+							    || ($fieldset_key == gettext('Information') && $fieldvalue [0] == gettext('Rate Group'))
+							    || ($fieldset_key == gettext('Sip Devices') && $fieldvalue [0] == gettext('Sip Profile'))
+							    || ($fieldset_key == gettext('Sip Devices') && $fieldvalue [0] == gettext('Account'))
+							    || ($fieldset_key == gettext('Account Settings') && $fieldvalue [0] == gettext('Localization'))) {
 								$form_contents .= form_dropdown_all ( $fieldvalue [1], $drp_array, $fieldvalue ['value'], $extra );
 							} else {
 								$form_contents .= form_dropdown ( $fieldvalue [1], $drp_array, $fieldvalue ['value'], $extra );
@@ -695,7 +710,8 @@ class Form {
 
 			$logintype = $this->CI->session->userdata('logintype');
 
-			$Actionkey = array_search ('Action',array_column ( $grid_fields, 0 ) );
+			$Actionkey = array_search (gettext('Action'),array_column ( $grid_fields, 0 ) );
+/*
 			if ($Actionkey == '') {
 				$Actionkey = array_search ('action',array_column ( $grid_fields, 0 ) );
 			}
@@ -706,11 +722,12 @@ class Form {
 				$Actionkey = array_search ('Ação',array_column ( $grid_fields, 0 ) );
 			}
 			if ($Actionkey == '') {
-				$Actionkey = array_search ('действие',array_column ( $grid_fields, 0 ) );
+				$Actionkey = array_search ('Действие',array_column ( $grid_fields, 0 ) );
 			}
 			if ($Actionkey == '') {
 				$Actionkey = array_search ('Açao',array_column ( $grid_fields, 0 ) );
 			}
+*/
 			$ActionArr = $grid_fields [$Actionkey];
 
 			$current_button_url = '';
@@ -726,7 +743,7 @@ class Form {
 				$acctype = "";
 				if (isset ( $row ["type"] ) && ($row ["type"] == '0' || $row ["type"] == '1' || $row ["type"] == '3')) {
 
-					$acctype = (isset ( $row ["posttoexternal"] ) && $row ["posttoexternal"] != '') ? "<span class='badge badge-dark float-left ml-1 mt-1'>" . $this->CI->{$this->lib_class}->get_account_type ( "", "", $row ["posttoexternal"] ) . "</span>" : "";
+					$acctype = (isset ( $row ["posttoexternal"] ) && $row ["posttoexternal"] != '') ? "<span class='badge badge-dark float-left ml-1 mt-1'>" . gettext($this->CI->{$this->lib_class}->get_account_type ( "", "", $row ["posttoexternal"] )) . "</span>" : "";
 				}
 				$reseller_id = $default_reseller_id;
 				if($default_reseller_id  == 0){
@@ -757,8 +774,10 @@ class Form {
 								) );
 							}
 							$row [$field_arr [2]] = $jsn_tmp [$field_key];
-							
-							
+
+                            if ($field_arr[2] == 'country_id'){
+                                $row [$field_arr [2]] = gettext($row [$field_arr [2]]);
+                            }
 						}
 						
 						if(isset($field_arr[6]) && !empty($field_arr[6]) && is_array($field_arr[6]) && $field_arr[6][0]== 'EDITABLE' && ((isset($permissioninfo[$module_name][$sub_module_name][$field_arr[6][1]]) && $permissioninfo[$module_name][$sub_module_name][$field_arr[6][1]] == 0 and $permissioninfo['login_type'] != '-1' and $permissioninfo['login_type'] != '3')  or ($permissioninfo['login_type'] == '-1' ) or ($permissioninfo['login_type'] == '3'))){
@@ -767,7 +786,7 @@ class Form {
 									$button_name = strtoupper($field_arr[6][1]);
 									if(isset($ActionArr[5]->$button_name)){
 									$current_button_html = $this->CI->{$this->lib_class}->get_action_buttons(array($button_name=>$ActionArr[5]->$button_name),$row['id']);
-									$jsn_tmp [$field_key] = str_replace($button_name, $row [$field_arr [2]],$current_button_html);					
+									$jsn_tmp [$field_key] = str_replace(gettext(ucfirst(strtolower($button_name))), $row [$field_arr [2]],$current_button_html);					
 									}
 									
 						 
@@ -777,16 +796,20 @@ class Form {
 							$jsn_tmp [$field_key] = $acctype != '' ? $fieldstr . $acctype : $fieldstr;
 							$sub_login_arr = '';
 							if ($ActionArr [5]->EDIT->url == "accounts/customer_edit/") {
-								$sub_login_arr = "<a href='".base_url()."login/login_as_customer/".$row ['id']."' title='Login As Customer'><i class='fa fa-sign-in' aria-hidden='true'></i></a>";
+								$sub_login_arr = "<a href='".base_url()."login/login_as_customer/".$row ['id']."' title='".gettext('Login As Customer')."'><i class='fa fa-sign-in' aria-hidden='true'></i></a>";
 								$jsn_tmp [$field_key] = $fieldstr . $acctype . $sub_login_arr;
 							}
 
 							if ($ActionArr [5]->EDIT->url == "accounts/reseller_edit/") {
-								$sub_login_arr = "<a href='".base_url()."login/login_as_reseller/".$row ['id']."' title='Login As Reseller'><i class='fa fa-sign-in' aria-hidden='true'></i></a>";
+								$sub_login_arr = "<a href='".base_url()."login/login_as_reseller/".$row ['id']."' title='".gettext('Login As Reseller')."'><i class='fa fa-sign-in' aria-hidden='true'></i></a>";
 								$jsn_tmp [$field_key] = $fieldstr . $acctype . $sub_login_arr;
 							}
 						} else {
-							$jsn_tmp [$field_key] = $row [$field_arr [2]];
+							if ( strrchr($row [$field_arr [2]], '<') ){
+								$jsn_tmp [$field_key] = $row [$field_arr [2]];
+							} else {
+								$jsn_tmp [$field_key] = gettext(ucwords(strtolower($row [$field_arr [2]])));
+							}
 						}
 					} else {
 						if ($field_arr [0] == gettext ( "Action" )) {
